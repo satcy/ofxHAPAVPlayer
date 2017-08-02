@@ -10,13 +10,16 @@
 
 #define FourCCLog(n,f) NSLog(@"%@, %c%c%c%c",n,(int)((f>>24)&0xFF),(int)((f>>16)&0xFF),(int)((f>>8)&0xFF),(int)((f>>0)&0xFF))
 
-const string ofxHAPAVPlayerVertexShader = "void main(void)\
+const string ofxHAPAVPlayerVertexShader = "varying vec4 color;\
+void main(void)\
 {\
 gl_Position = ftransform();\
+color = gl_Color;\
 gl_TexCoord[0] = gl_MultiTexCoord0;\
 }";
 
 const string ofxHAPAVPlayerFragmentShader = "uniform sampler2D cocgsy_src;\
+varying vec4 color;\
 const vec4 offsets = vec4(-0.50196078431373, -0.50196078431373, 0.0, 0.0);\
 void main()\
 {\
@@ -26,12 +29,13 @@ float scale = ( CoCgSY.z * ( 255.0 / 8.0 ) ) + 1.0;\
 float Co = CoCgSY.x / scale;\
 float Cg = CoCgSY.y / scale;\
 float Y = CoCgSY.w;\
-vec4 rgba = vec4(Y + Co - Cg, Y + Cg, Y - Co - Cg, 1.0);\
+vec4 rgba = vec4(Y + Co - Cg, Y + Cg, Y - Co - Cg, 1.0) * color;\
 gl_FragColor = rgba;\
 }";
 
 const string ofxHAPAVPlayerPlusAFragmentShader = "uniform sampler2D cocgsy_src;\
 uniform sampler2D alpha_src;\
+varying vec4 color;\
 const vec4 offsets = vec4(-0.50196078431373, -0.50196078431373, 0.0, 0.0);\
 void main()\
 {\
@@ -42,7 +46,7 @@ float scale = ( CoCgSY.z * ( 255.0 / 8.0 ) ) + 1.0;\
 float Co = CoCgSY.x / scale;\
 float Cg = CoCgSY.y / scale;\
 float Y = CoCgSY.w;\
-vec4 rgba = vec4(Y + Co - Cg, Y + Cg, Y - Co - Cg, theAlpha.r);\
+vec4 rgba = vec4(Y + Co - Cg, Y + Cg, Y - Co - Cg, theAlpha.r) * color;\
 gl_FragColor = rgba;\
 }";
 
