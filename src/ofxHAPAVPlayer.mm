@@ -30,6 +30,22 @@ vec4 rgba = vec4(Y + Co - Cg, Y + Cg, Y - Co - Cg, 1.0);\
 gl_FragColor = rgba;\
 }";
 
+const string ofxHAPAVPlayerPlusAFragmentShader = "uniform sampler2D cocgsy_src;\
+uniform sampler2D alpha_src;\
+const vec4 offsets = vec4(-0.50196078431373, -0.50196078431373, 0.0, 0.0);\
+void main()\
+{\
+vec4 CoCgSY = texture2D(cocgsy_src, gl_TexCoord[0].xy);\
+vec4 theAlpha = texture2D(alpha_src, gl_TexCoord[0].xy);\
+CoCgSY += offsets;\
+float scale = ( CoCgSY.z * ( 255.0 / 8.0 ) ) + 1.0;\
+float Co = CoCgSY.x / scale;\
+float Cg = CoCgSY.y / scale;\
+float Y = CoCgSY.w;\
+vec4 rgba = vec4(Y + Co - Cg, Y + Cg, Y - Co - Cg, theAlpha.r);\
+gl_FragColor = rgba;\
+}";
+
 //--------------------------------------------------------------
 ofxHAPAVPlayer::ofxHAPAVPlayer(){
     
@@ -160,6 +176,7 @@ void ofxHAPAVPlayer::update(){
                 
                 bNeedsShader = false;
                 
+                codecSubType = [[delegate getHAPDecodedFrame] codecSubType];
                 for (int texIndex=0; texIndex<textureCount; ++texIndex)	{
                     unsigned int bitsPerPixel = 0;
                     switch (dxtPixelFormats[texIndex]) {
@@ -235,6 +252,9 @@ void ofxHAPAVPlayer::update(){
                         bool ok = shader.setupShaderFromSource(GL_VERTEX_SHADER, ofxHAPAVPlayerVertexShader);
                         if(ok) ok = shader.setupShaderFromSource(GL_FRAGMENT_SHADER, ofxHAPAVPlayerFragmentShader);
                         if(ok) ok = shader.linkProgram();
+                        ok = alphaShader.setupShaderFromSource(GL_VERTEX_SHADER, ofxHAPAVPlayerVertexShader);
+                        if(ok) ok = alphaShader.setupShaderFromSource(GL_FRAGMENT_SHADER, ofxHAPAVPlayerPlusAFragmentShader);
+                        if(ok) ok = alphaShader.linkProgram();
                     }
                     
                     if (videoTextures[texIndex].isAllocated() == false	||
@@ -378,9 +398,25 @@ void ofxHAPAVPlayer::draw(float x, float y, float w, float h){
     ofPushMatrix();
     ofTranslate(x, y);
     //ofScale(w / getWidth(), h / getHeight());
-    if(bNeedsShader) shader.begin();
+    if(bNeedsShader) {
+        if (codecSubType==kHapYCoCgCodecSubType)	{
+            shader.begin();
+        }
+        else if (codecSubType == kHapYCoCgACodecSubType)	{
+            alphaShader.begin();
+            alphaShader.setUniformTexture("cocgsy_src", videoTextures[0], 0);
+            alphaShader.setUniformTexture("alpha_src", videoTextures[1], 1);
+        }
+    }
     videoTextures[0].draw(0, 0, w, h); // for now just drawing texture [0] as I can't find an example with 2 textures!?!??
-    if(bNeedsShader) shader.end();
+    if(bNeedsShader) {
+        if (codecSubType==kHapYCoCgCodecSubType)	{
+            shader.end();
+        }
+        else if (codecSubType == kHapYCoCgACodecSubType)	{
+            alphaShader.end();
+        }
+    }
     ofPopMatrix();
 }
 

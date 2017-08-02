@@ -102,6 +102,9 @@ protected:
     GLenum internalFormats[2];
     
     ofShader shader;
+    ofShader alphaShader;
+    
+    OSType codecSubType;
     
 #ifdef __OBJC__
     ofxHAPAVPlayerDelegate * delegate = nil;
