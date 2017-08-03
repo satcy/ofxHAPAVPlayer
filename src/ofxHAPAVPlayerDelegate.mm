@@ -485,7 +485,8 @@ static void *ItemStatusContext = &ItemStatusContext;
                      if(_loadRate != INFINITY){
                          [self setSpeed:_loadRate];
                      }else{
-                         [self.player setRate:_rate]; // load paused?
+                         [self setSpeed:1.0f];
+                         [self.player setRate:0.0f]; // load paused?
                      }
                  }];
                 
